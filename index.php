@@ -40,20 +40,28 @@
     ];
     $filteredHotels = $hotels;
 
-    if(isset($_GET['parkRequired'])){
-        $parkFilter = $_GET['parkRequired'];
+    $filtersOn = isset($_GET['parkRequired']) || isset($_GET['rating']);
+
+    if($filtersOn){
         $filteredHotels = [];
-        if ($parkFilter == 'true'){
-            foreach ($hotels as $hotel) {
-                if($hotel['parking']){
-                    $filteredHotels[] = $hotel;
-                }    
+        foreach ($hotels as $hotel) {
+            $toPush = true;
+            if (isset($_GET['parkRequired']) && $_GET['parkRequired'] === 'false') {
+                if ($hotel['parking']) {
+                    $toPush = false;
+                }
             }
-        }else{
-            foreach ($hotels as $hotel) {
-                if(!$hotel['parking']){
-                    $filteredHotels[] = $hotel;
-                }    
+            if(isset($_GET['parkRequired']) && $_GET['parkRequired'] === 'true'){
+                if (!$hotel['parking']){
+                    $toPush = false;
+                }
+            }
+            
+            if(isset($_GET['rating']) && $_GET['rating'] > $hotel['vote']){
+                $toPush = false;
+            }
+            if ($toPush){
+                $filteredHotels[] = $hotel;
             }
         }
     }
@@ -77,18 +85,22 @@
         <div class="container">
             <h1 class="text-center text-primary my-5">HOTEL? <del>TriVaGo</del> Boolean! </h1>
             <form method="GET" class="mb-3 border border-secondary p-3">
-                <div class="mb-3 text-white">
-                    <div class="w-50">
+                <div class="mb-4 text-white d-flex justify-content-start gap-5">
+                    <div>
                         <h5>Necessiti del parcheggio?</h5>
                         <input type="radio" name="parkRequired" value="true" id="yes">
                         <label for="yes" class="me-3">Yes</label>
                         <input type="radio" name="parkRequired" value="false" id="no">
                         <label for="no">No</label>
                     </div>
+                    <div>
+                        <h5>Inserisci il minimo di stelle che vuoi, da 1 a 5</h5>
+                        <input type="number" name='rating' class="form-control" value="<?php echo $_GET["rating"] ?? ''?>">
+                    </div>
                 </div>
-                <div class="text-center">
+                <div>
                     <button class="btn btn-primary btn-lg me-3">Invia</button>
-                    <button class="btn btn-warning btn-lg" href="#">Annulla</button>
+                    <button class="btn btn-warning btn-lg" href="index.php">Annulla</button>
                 </div>
             </form>
             <table class="table text-white">
@@ -106,7 +118,7 @@
                 
                 ?>
                 <tr>
-                    <td> <?php echo $hotel['name']?></td >
+                    <td> <?php echo $hotel['name'] ?></td >
                     <td> <?php echo $hotel['description']?></td >
                     <td>
                         <!-- con una condizione stampo presente nel caso in cui ci sia parcheggio, per evitare il true o false stampato -->
